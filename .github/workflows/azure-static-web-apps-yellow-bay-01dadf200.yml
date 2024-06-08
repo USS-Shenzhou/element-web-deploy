@@ -41,6 +41,7 @@ jobs:
           for dir in $(find . -maxdepth 1 -type d); do
             echo $(realpath $dir)
           done
+          cp config.json build/
           
       - name: Build And Deploy
         id: builddeploy
