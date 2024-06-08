@@ -30,18 +30,15 @@ jobs:
           echo "Latest release: $latest_release"
           echo "::set-output name=release::$latest_release"
 
-      - name: Download latest release tarball
+      - name: Download latest release tar
         run: |
           curl -L "https://github.com/element-hq/element-web/releases/download/${{ steps.get_latest_release.outputs.release }}/element-${{ steps.get_latest_release.outputs.release }}.tar.gz" -o element.tar.gz
 
-      - name: Extract tarball
+      - name: Extract tar
         run: |
           tar -xzvf element.tar.gz
-
-      - name: Rename extracted directory to build
-        run: |
-          extracted_dir=$(tar -tzf element.tar.gz | head -1 | cut -f1 -d"/")
-          mv $extracted_dir build
+          mv element-v* build
+          
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -54,6 +51,7 @@ jobs:
           app_location: "/" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "~/build" # Built app content directory - optional
+          skip_app_build: true
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
