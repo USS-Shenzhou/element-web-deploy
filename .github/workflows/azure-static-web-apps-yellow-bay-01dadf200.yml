@@ -38,6 +38,8 @@ jobs:
         run: |
           tar -xzvf element.tar.gz
           mv element-v* build
+          for dir in $(find . -maxdepth 1 -type d); do
+            echo $(realpath $dir)
           
       - name: Build And Deploy
         id: builddeploy
