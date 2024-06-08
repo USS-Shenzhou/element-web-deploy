@@ -1,6 +1,7 @@
 name: Azure Static Web Apps CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -11,7 +12,7 @@ on:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -19,6 +20,28 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Get latest release tag
+        id: get_latest_release
+        run: |
+          latest_release=$(curl -s https://api.github.com/repos/element-hq/element-web/releases/latest | jq -r .tag_name)
+          echo "Latest release: $latest_release"
+          echo "::set-output name=release::$latest_release"
+
+      - name: Download latest release tarball
+        run: |
+          curl -L "https://github.com/element-hq/element-web/releases/download/${{ steps.get_latest_release.outputs.release }}/element-${{ steps.get_latest_release.outputs.release }}.tar.gz" -o element.tar.gz
+
+      - name: Extract tarball
+        run: |
+          tar -xzvf element.tar.gz
+
+      - name: Rename extracted directory to build
+        run: |
+          extracted_dir=$(tar -tzf element.tar.gz | head -1 | cut -f1 -d"/")
+          mv $extracted_dir build
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -30,7 +53,7 @@ jobs:
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "/" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "build" # Built app content directory - optional
+          output_location: "~/build" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
